@@ -77,23 +77,32 @@ def process_image(image, case_selection="Unknown"):
     
     return processed_img_rgb, eccentricity, iop_pressure
 
-def mock_cnn_predict(image):
+def mock_cnn_predict(image, case_selection="Unknown"):
     """
     Simulates a CNN prediction deterministically based on image data.
     If you have a real Keras/PyTorch model, we can load it here!
     """
     time.sleep(1.0)
     img_array = np.array(image.convert('L'))
-    # Use image mean brightness to generate a stable pseudo-prediction
     mean_val = np.mean(img_array)
-    # Map to a probability (just a deterministic function for demonstration)
-    glaucoma_prob = (mean_val % 100) / 100.0
     
-    # Push toward extremes slightly for clearer results
-    if glaucoma_prob < 0.5:
-        glaucoma_prob = max(0.05, glaucoma_prob * 0.5)
+    # Generate a deterministic base variation
+    base_variation = (mean_val % 20) / 100.0 
+    
+    # Connect the CNN output to the Sidebar Configuration for precise demonstration
+    if case_selection == "Normal":
+        # Force a normal reading (5% to 25% risk)
+        glaucoma_prob = 0.05 + base_variation
+    elif case_selection == "Glaucoma":
+        # Force a high-risk reading (75% to 95% risk)
+        glaucoma_prob = 0.75 + base_variation
     else:
-        glaucoma_prob = min(0.95, glaucoma_prob * 1.5)
+        # Fallback to pseudo-prediction
+        glaucoma_prob = (mean_val % 100) / 100.0
+        if glaucoma_prob < 0.5:
+            glaucoma_prob = max(0.05, glaucoma_prob * 0.5)
+        else:
+            glaucoma_prob = min(0.95, glaucoma_prob * 1.5)
         
     return glaucoma_prob
 
@@ -258,7 +267,7 @@ def main():
                 
             with col2:
                 with st.spinner("Running CNN Inference..."):
-                    prob = mock_cnn_predict(image)
+                    prob = mock_cnn_predict(image, case_selection)
                 
                 st.subheader("CNN Prediction")
                 
